@@ -233,19 +233,25 @@ function buildSummaryChart(names, stores){
     rightLabels += '<text x="'+(W-padR+14)+'" y="'+(yy+4).toFixed(1)+'" text-anchor="start" font-size="11" fill="#B3AA92">'+Math.round(pv)+'%</text>';
   }
   var barW = Math.min(52, (plotR-plotL)/n*0.42);
-  var bars='', barLabels='';
-  names.forEach(function(nm,i){
-    var x = xPos(i), pct = stores[nm].low_pct;
-    var yb = yRight(pct), yBase = yRight(0);
-    bars += '<rect x="'+(x-barW/2).toFixed(1)+'" y="'+yb.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+(yBase-yb).toFixed(1)+'" rx="4" fill="#ECD9AE" stroke="#C9A063" stroke-width="1.5"/>';
-    barLabels += '<text x="'+x.toFixed(1)+'" y="'+(yb-10).toFixed(1)+'" text-anchor="middle" font-size="12.5" font-weight="700" fill="#8A6D3B">'+pct+'%</text>';
-  });
+  var bars='', barLabels='', dots='', lineLabels='';
+  function hit(a,b){ return a[0]<b[1] && b[0]<a[1]; }
   var linePts = names.map(function(nm,i){ return xPos(i).toFixed(1)+','+yLeft(stores[nm].avg).toFixed(1); }).join(' ');
-  var dots='', lineLabels='';
   names.forEach(function(nm,i){
-    var x=xPos(i), y=yLeft(stores[nm].avg);
+    var x = xPos(i), pct = stores[nm].low_pct, avg = stores[nm].avg;
+    var yb = yRight(pct), yBase = yRight(0), y = yLeft(avg);
+    bars += '<rect x="'+(x-barW/2).toFixed(1)+'" y="'+yb.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+(yBase-yb).toFixed(1)+'" rx="4" fill="#ECD9AE" stroke="#C9A063" stroke-width="1.5"/>';
     dots += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="5.5" fill="#fff" stroke="#8A6D3B" stroke-width="2.5"/>';
-    lineLabels += '<text x="'+x.toFixed(1)+'" y="'+(y-16).toFixed(1)+'" text-anchor="middle" font-size="12.5" font-weight="700" fill="#8A6D3B">'+stores[nm].avg.toFixed(2)+'</text>';
+    var dotR=[y-9,y+9], lineLblY=y-16, lineLblR=[lineLblY-13,lineLblY+3];
+    lineLabels += '<text x="'+x.toFixed(1)+'" y="'+lineLblY.toFixed(1)+'" text-anchor="middle" font-size="12.5" font-weight="700" fill="#8A6D3B">'+avg.toFixed(2)+'</text>';
+    var cands=[yb-10, yb+19, y+27, lineLblY-18], by=cands[0];
+    for(var c=0;c<cands.length;c++){
+      var r=[cands[c]-13,cands[c]+3];
+      var inBar = cands[c]>yb && (cands[c]+3)<=yBase-2;
+      if(c===1 && !inBar) continue;
+      if(c===2 && (cands[c]+3)>H-padB+4) continue;
+      if(!hit(r,dotR) && !hit(r,lineLblR)){ by=cands[c]; break; }
+    }
+    barLabels += '<text x="'+x.toFixed(1)+'" y="'+by.toFixed(1)+'" text-anchor="middle" font-size="12.5" font-weight="700" fill="#8A6D3B">'+pct+'%</text>';
   });
   var xLabels='';
   names.forEach(function(nm,i){
